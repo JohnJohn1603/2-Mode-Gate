@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RFID Gate Dashboard</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0a0c0f;
+        --panel: #0f1318;
+        --border: #1e2530;
+        --accent: #00e5ff;
+        --green: #00ff88;
+        --red: #ff3355;
+        --yellow: #ffd700;
+        --text: #c8d8e8;
+        --muted: #4a5a6a;
+        --mono: "Share Tech Mono", monospace;
+        --sans: "Rajdhani", sans-serif;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--sans);
+        min-height: 100vh;
+        padding: 24px;
+        background-image: radial-gradient(
+          ellipse 80% 50% at 50% -20%,
+          rgba(0, 229, 255, 0.06) 0%,
+          transparent 70%
+        );
+      }
+
+      /* ── HEADER ── */
+      header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 32px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--border);
+      }
+      .logo {
+        width: 42px;
+        height: 42px;
+        border: 2px solid var(--accent);
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-size: 20px;
+        color: var(--accent);
+        box-shadow: 0 0 12px rgba(0, 229, 255, 0.3);
+        flex-shrink: 0;
+      }
+      header h1 {
+        font-family: var(--sans);
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #fff;
+      }
+      header p {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 2px;
+        letter-spacing: 1px;
+      }
+      .status-dot {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--green);
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 8px var(--green);
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
+
+      /* ── LAYOUT ── */
+      .grid {
+        display: grid;
+        grid-template-columns: 340px 1fr;
+        gap: 20px;
+        align-items: start;
+      }
+      @media (max-width: 800px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* ── PANEL ── */
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .panel-header {
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+      .panel-header .icon {
+        font-size: 15px;
+      }
+      .panel-body {
+        padding: 20px;
+      }
+
+      /* ── FORM ── */
+      label {
+        display: block;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 1px;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+      }
+      input[type="text"] {
+        width: 100%;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 10px 14px;
+        color: var(--text);
+        font-family: var(--mono);
+        font-size: 13px;
+        outline: none;
+        transition: border-color 0.2s;
+        margin-bottom: 14px;
+      }
+      input[type="text"]:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.08);
+      }
+      input[type="text"]::placeholder {
+        color: var(--muted);
+      }
+
+      .btn {
+        width: 100%;
+        padding: 11px;
+        background: var(--accent);
+        color: #000;
+        font-family: var(--sans);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition:
+          opacity 0.15s,
+          transform 0.1s;
+      }
+      .btn:hover {
+        opacity: 0.85;
+      }
+      .btn:active {
+        transform: scale(0.98);
+      }
+      .btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      /* ── TOAST ── */
+      #toast {
+        display: none;
+        margin-top: 14px;
+        padding: 10px 14px;
+        border-radius: 6px;
+        font-family: var(--mono);
+        font-size: 12px;
+        animation: fadeIn 0.2s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      #toast.ok {
+        background: rgba(0, 255, 136, 0.1);
+        border: 1px solid var(--green);
+        color: var(--green);
+      }
+      #toast.err {
+        background: rgba(255, 51, 85, 0.1);
+        border: 1px solid var(--red);
+        color: var(--red);
+      }
+
+      /* ── STATS ── */
+      .stats {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .stat {
+        flex: 1;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px 14px;
+        text-align: center;
+      }
+      .stat-val {
+        font-family: var(--mono);
+        font-size: 26px;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .stat-lbl {
+        font-size: 10px;
+        letter-spacing: 1px;
+        color: var(--muted);
+        text-transform: uppercase;
+        margin-top: 4px;
+      }
+
+      /* ── TABLE ── */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      thead th {
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--muted);
+        padding: 8px 12px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+      }
+      tbody tr {
+        border-bottom: 1px solid var(--border);
+        transition: background 0.15s;
+      }
+      tbody tr:last-child {
+        border-bottom: none;
+      }
+      tbody tr:hover {
+        background: rgba(0, 229, 255, 0.03);
+      }
+      td {
+        padding: 12px 12px;
+        vertical-align: middle;
+      }
+
+      .name-cell {
+        font-weight: 600;
+        color: #fff;
+        font-size: 14px;
+      }
+      .uid-cell {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--accent);
+        letter-spacing: 1px;
+      }
+      .uid-badge {
+        background: rgba(0, 229, 255, 0.08);
+        border: 1px solid rgba(0, 229, 255, 0.2);
+        border-radius: 4px;
+        padding: 3px 8px;
+        display: inline-block;
+      }
+      .date-cell {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .btn-del {
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        color: var(--muted);
+        cursor: pointer;
+        padding: 5px 9px;
+        font-size: 13px;
+        transition: all 0.15s;
+      }
+      .btn-del:hover {
+        border-color: var(--red);
+        color: var(--red);
+        background: rgba(255, 51, 85, 0.07);
+      }
+
+      .empty {
+        text-align: center;
+        padding: 48px 0;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .empty-icon {
+        font-size: 32px;
+        margin-bottom: 12px;
+        opacity: 0.4;
+      }
+
+      /* ── SEARCH ── */
+      .toolbar {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 14px;
+        align-items: center;
+      }
+      .search-wrap {
+        position: relative;
+        flex: 1;
+      }
+      .search-wrap input {
+        padding-left: 34px;
+        margin-bottom: 0;
+        font-size: 12px;
+      }
+      .search-icon {
+        position: absolute;
+        left: 11px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted);
+        font-size: 14px;
+        pointer-events: none;
+      }
+      .count-badge {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="logo">⬡</div>
+      <div>
+        <h1>RFID Gate</h1>
+        <p>ACCESS CONTROL DASHBOARD</p>
+      </div>
+      <div class="status-dot">
+        <div class="dot"></div>
+        <span>ONLINE</span>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- ── FORM ── -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="icon">＋</span> Đăng ký thẻ mới
+        </div>
+        <div class="panel-body">
+          <label>Họ tên</label>
+          <input type="text" id="inp-name" placeholder="Ví dụ: Nguyễn Văn A" />
+
+          <!-- UID input is hidden, only used if manual bypass is needed or we can just remove it completely -->
+
+          <button class="btn" id="btn-register" onclick="register()">
+            Bắt đầu đăng ký thẻ
+          </button>
+          <div id="toast"></div>
+
+          <div
+            style="
+              margin-top: 24px;
+              padding-top: 18px;
+              border-top: 1px solid var(--border);
+            "
+          >
+            <div
+              style="
+                font-family: var(--mono);
+                font-size: 10px;
+                color: var(--muted);
+                letter-spacing: 1px;
+                text-transform: uppercase;
+                margin-bottom: 10px;
+              "
+            >
+              Cách đăng ký
+            </div>
+            <div
+              style="
+                font-family: var(--mono);
+                font-size: 11px;
+                color: var(--muted);
+                line-height: 1.8;
+              "
+            >
+              1. Nhập họ tên vào ô bên trên.<br />
+              2. Nhấn nút "Bắt đầu đăng ký".<br />
+              3. Đưa thẻ mới vào sát đầu đọc RFID.<br />
+              Hệ thống sẽ tự nhận diện và lưu lại!
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TABLE ── -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="icon">☰</span> Danh sách người dùng
+        </div>
+        <div class="panel-body">
+          <div class="stats">
+            <div class="stat">
+              <div class="stat-val" id="stat-total">—</div>
+              <div class="stat-lbl">Tổng thẻ</div>
+            </div>
+            <div class="stat">
+              <div class="stat-val" style="color: var(--green)" id="stat-today">
+                —
+              </div>
+              <div class="stat-lbl">Hôm nay</div>
+            </div>
+          </div>
+
+          <div class="toolbar">
+            <div class="search-wrap">
+              <span class="search-icon">🔍</span>
+              <input
+                type="text"
+                id="search"
+                placeholder="Tìm tên hoặc UID…"
+                oninput="renderTable()"
+              />
+            </div>
+            <span class="count-badge" id="count-badge"></span>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Họ tên</th>
+                  <th>UID thẻ</th>
+                  <th>Ngày đăng ký</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+            <div class="empty" id="empty" style="display: none">
+              <div class="empty-icon">📭</div>
+              Chưa có thẻ nào được đăng ký
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let allUsers = [];
+
+      async function loadUsers() {
+        if (window.location.protocol === "file:") {
+          showToast(
+            "Bạn phải truy cập qua http://localhost:3000 thay vì mở file index.html trực tiếp!",
+            "err",
+          );
+          return;
+        }
+        try {
+          const res = await fetch("/api/users");
+          if (!res.ok) {
+            const errBody = await res.text();
+            throw new Error(`Lỗi server: ${res.status} - ${errBody}`);
+          }
+          allUsers = await res.json();
+          updateStats();
+          renderTable();
+        } catch (e) {
+          console.error("Fetch error:", e);
+          showToast(
+            "Không thể kết nối đến máy chủ. Hãy kiểm tra terminal node server.js",
+            "err",
+          );
+        }
+      }
+
+      function updateStats() {
+        document.getElementById("stat-total").textContent = allUsers.length;
+        const today = new Date().toDateString();
+        const todayCount = allUsers.filter(
+          (u) => new Date(u.registeredAt).toDateString() === today,
+        ).length;
+        document.getElementById("stat-today").textContent = todayCount;
+      }
+
+      function renderTable() {
+        const q = document.getElementById("search").value.toLowerCase().trim();
+        const filtered = q
+          ? allUsers.filter(
+              (u) =>
+                u.name.toLowerCase().includes(q) ||
+                u.uid.toLowerCase().includes(q),
+            )
+          : allUsers;
+
+        document.getElementById("count-badge").textContent = q
+          ? `${filtered.length} / ${allUsers.length}`
+          : `${allUsers.length} người`;
+
+        const tbody = document.getElementById("tbody");
+        const empty = document.getElementById("empty");
+
+        if (filtered.length === 0) {
+          tbody.innerHTML = "";
+          empty.style.display = "block";
+          return;
+        }
+        empty.style.display = "none";
+
+        tbody.innerHTML = filtered
+          .map(
+            (u, i) => `
+    <tr>
+      <td style="color:var(--muted);font-family:var(--mono);font-size:11px">${i + 1}</td>
+      <td class="name-cell">${esc(u.name)}</td>
+      <td class="uid-cell"><span class="uid-badge">${formatUID(u.uid)}</span></td>
+      <td class="date-cell">${fmtDate(u.registeredAt)}</td>
+      <td><button class="btn-del" onclick="deleteUser('${u._id}', '${esc(u.name)}')">✕</button></td>
+    </tr>
+  `,
+          )
+          .join("");
+      }
+
+      async function register() {
+        const name = document.getElementById("inp-name").value.trim();
+        if (!name) {
+          showToast("Vui lòng điền họ tên người dùng", "err");
+          return;
+        }
+
+        const btn = document.getElementById("btn-register");
+        btn.disabled = true;
+        btn.textContent = "Đang chờ quẹt thẻ... (30s)";
+
+        try {
+          const res = await fetch("/api/users", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name }),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            showToast(data.error, "err");
+            return;
+          }
+
+          showToast(`✓ Đã đăng ký thẻ cho: ${name}`, "ok");
+          document.getElementById("inp-name").value = "";
+          loadUsers();
+        } catch (e) {
+          showToast("Lỗi kết nối", "err");
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "Bắt đầu đăng ký thẻ";
+        }
+      }
+
+      async function deleteUser(id, name) {
+        if (!confirm(`Xóa "${name}" khỏi danh sách?`)) return;
+        const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
+        if (res.ok) {
+          showToast(`Đã xóa ${name}`, "ok");
+          loadUsers();
+        } else showToast("Xóa thất bại", "err");
+      }
+
+      function showToast(msg, type) {
+        const t = document.getElementById("toast");
+        t.textContent = msg;
+        t.className = type;
+        t.style.display = "block";
+        clearTimeout(t._timer);
+        t._timer = setTimeout(() => (t.style.display = "none"), 3000);
+      }
+
+      function formatUID(uid) {
+        return uid.match(/.{1,2}/g)?.join(" ") || uid;
+      }
+
+      function fmtDate(iso) {
+        const d = new Date(iso);
+        return (
+          d.toLocaleDateString("vi-VN") +
+          " " +
+          d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+        );
+      }
+
+      function esc(s) {
+        return s
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      loadUsers();
+      setInterval(loadUsers, 5000);
+    </script>
+  </body>
+</html>

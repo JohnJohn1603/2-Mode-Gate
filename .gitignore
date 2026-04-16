@@ -3,4 +3,5 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
-.hand_servo/
+hand_servo/
+webapp/node_modules
